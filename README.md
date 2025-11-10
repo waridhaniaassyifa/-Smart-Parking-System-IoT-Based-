@@ -1,28 +1,40 @@
+📦 Dependencies & Installation
+
+1. Python Dependenciesfile requirements.txt:
+
+txtFlask==3.0.0
+flask-socketio==5.3.5
+flask-cors==4.0.0
+opencv-python==4.8.1.78
+numpy==1.24.3
+qrcode==7.4.2
+pillow==10.1.0
+python-socketio==5.10.0
+requests==2.31.0Install
+
+install satu per satu:
+
+"bashpip install Flask flask-socketio flask-cors opencv-python numpy qrcode pillow python-socketio req"
+
+2. Cloudflare Tunnel (Opsional - untuk Mobile Camera)
+Windows:
+
+bashwinget install --id Cloudflare.cloudflared
+macOS:
+
+bashbrew install cloudflare/cloudflare/cloudflared
+Linux (Ubuntu/Debian):
+
+bashwget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb 
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+Verifikasi instalasi:
+
+bashcloudflared --version
+
 # 🚀 Cara Menjalankan Smart Parking System
 
-## A. Mode Lokal (HP & PC di Wi-Fi yang sama)
-
-1. **Jalankan server:**
-```bash
-   python app.py
-```
-
-2. **Akses dari PC:**
-   - Buka browser: `http://localhost:5000`
-
-3. **Akses dari HP:**
-   - Pastikan HP & PC di Wi-Fi yang sama
-   - Di HP, buka browser: `http://[IP_LOKAL]:5000`
-   - IP lokal akan muncul di console (contoh: `http://192.168.1.100:5000`)
-
-4. **Generate QR Code:**
-   - Klik "Tambah Kamera" → pilih "Mobile Camera"
-   - Scan QR code dengan HP
-   - QR akan otomatis pakai IP lokal
-
----
-
-## B. Mode Online (Cloudflare Tunnel)
+## A. Mode Online (Cloudflare Tunnel)
 
 ### Kenapa butuh tunnel?
 - HP bisa akses dari mana saja (tidak perlu Wi-Fi yang sama)
