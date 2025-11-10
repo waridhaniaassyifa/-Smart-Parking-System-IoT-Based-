@@ -59,31 +59,54 @@
 
         document.getElementById('start').onclick = async () => {
             try {
+                // Improved camera access with fallback
+                if (!navigator.mediaDevices) {
+                    status.textContent = 'Error: Camera API not supported in this browser';
+                    status.innerHTML += '<br><br>💡 Gunakan Chrome/Safari atau akses via HTTPS';
+                    return;
+                }
+                
                 stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
                 });
+                
                 video.srcObject = stream;
                 
-                // Set canvas size
+                // Set canvas size after video is ready
                 video.addEventListener('loadedmetadata', () => {
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
+                    status.textContent = 'Status: Streaming...';
                 });
                 
                 // Start sending frames
                 intervalId = setInterval(() => {
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const frameData = canvas.toDataURL('image/jpeg', 0.8);
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const frameData = canvas.toDataURL('image/jpeg', 0.8);
                     
-                    socket.emit('mobile_frame', {
-                        token: token,
-                        frame: frameData
-                    });
-                }, 100); // Send 10 FPS
+                        socket.emit('mobile_frame', {
+                            token: token,
+                            frame: frameData
+                        });
+                    }
+                }, 150); // Send ~6-7 FPS for smoother stream
                 
-                status.textContent = 'Status: Streaming...';
             } catch (err) {
                 status.textContent = 'Error: ' + err.message;
+        
+                // Specific error messages
+                if (err.name === 'NotAllowedError') {
+                    status.innerHTML += '<br><br>❌ Camera permission denied';
+                } else if (err.name === 'NotFoundError') {
+                    status.innerHTML += '<br><br>❌ No camera found';
+                } else if (err.name === 'NotSupportedError') {
+                    status.innerHTML += '<br><br>💡 Use HTTPS or Cloudflare Tunnel';
+                }
             }
         };
 

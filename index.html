@@ -550,41 +550,6 @@ body.dark .field input, body.dark .field select {
   font-size: 12px; 
 }
 
-.preset-list { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
-  margin-top: 12px; 
-}
-
-.preset-btn { 
-  background: var(--card); 
-  border: 1px solid rgba(0,0,0,0.06); 
-  padding: 10px 12px; 
-  border-radius: 10px; 
-  cursor: pointer; 
-  text-align: left; 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-  transition: all .15s ease;
-  color: var(--text);
-}
-
-body.dark .preset-btn { 
-  border: 1px solid rgba(255,255,255,0.1); 
-  background: var(--bg);
-}
-
-.preset-btn:hover { 
-  background: var(--bg); 
-  border-color: var(--accent);
-}
-
-body.dark .preset-btn:hover { 
-  background: var(--card); 
-}
-
 @keyframes pop { 
   from { 
       transform: translateY(8px) scale(.98); 
@@ -651,7 +616,7 @@ body.dark .preset-btn:hover {
           </label>
         </div>
         <button id="btn-add-camera" class="btn accent">Tambah Kamera</button>
-        <button id="btn-tunnel-settings" class="btn ghost">⚙️ Tunnel</button>
+        <button id="btn-settings" class="btn ghost">⚙️ Settings</button>
       </div>
     </header>
 
@@ -724,22 +689,6 @@ body.dark .preset-btn:hover {
           <p id="mobile-url" style="word-break:break-all; font-size:12px;"></p>
         </div>
       </label>
-
-      <div class="muted small" style="margin-top:8px;">Atau pilih preset:</div>
-      <div class="preset-list">
-        <button class="preset-btn" data-preset="Kamera Utama">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2"></rect><circle cx="12" cy="13" r="3.2"></circle></svg>
-          Kamera Utama
-        </button>
-        <button class="preset-btn" data-preset="Kamera Pintu">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2"></rect><circle cx="12" cy="13" r="3.2"></circle></svg>
-          Kamera Pintu
-        </button>
-        <button class="preset-btn" data-preset="Kamera Samping">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2"></rect><circle cx="12" cy="13" r="3.2"></circle></svg>
-          Kamera Samping
-        </button>
-      </div>
 
       <div class="modal-actions">
         <button class="btn ghost" data-close>Batal</button>
@@ -819,35 +768,53 @@ body.dark .preset-btn:hover {
     </div>
   </div>
   
-  <!-- Modal: Tunnel Settings -->
-  <div class="modal-backdrop hidden" id="modal-tunnel">
+  <!-- Modal: Settings -->
+  <div class="modal-backdrop hidden" id="modal-settings">
     <div class="modal card-modal" role="dialog" aria-modal="true">
       <button class="modal-close" data-close>&times;</button>
-      <h3>Cloudflare Tunnel Settings</h3>
-      <p class="muted small">Set public URL untuk akses mobile via internet</p>
-  
-      <label class="field">
-        <div class="label">Public URL (dari cloudflared)</div>
-        <input id="input-public-url" placeholder="https://xxx.trycloudflare.com" />
-      </label>
-  
-      <div class="muted small" style="margin-top:8px;">
-        <strong>Cara menggunakan:</strong><br>
-        1. Jalankan: <code>cloudflared tunnel --url http://localhost:5000</code><br>
-        2. Copy URL yang muncul (contoh: https://xxx.trycloudflare.com)<br>
-        3. Paste di atas dan klik Simpan<br>
-        4. QR code akan otomatis menggunakan URL public
+      <h3>⚙️ Pengaturan Sistem</h3>
+      <p class="muted small">Konfigurasi tunnel dan manajemen sistem</p>
+
+      <!-- Cloudflare Tunnel Section -->
+      <div style="margin-top: 20px; padding: 16px; background: var(--bg); border-radius: 10px;">
+        <h4 style="margin: 0 0 10px 0;">Cloudflare Tunnel</h4>
+      
+        <label class="field">
+          <div class="label">Public URL (dari cloudflared)</div>
+          <input id="input-public-url" placeholder="https://xxx.trycloudflare.com" />
+        </label>
+
+       <div class="muted small" style="margin-top:8px;">
+          <strong>Cara menggunakan:</strong><br>
+          1. Jalankan: <code>cloudflared tunnel --url http://localhost:5000</code><br>
+          2. Copy URL yang muncul (contoh: https://xxx.trycloudflare.com)<br>
+          3. Paste di atas dan klik Simpan Tunnel<br>
+          4. QR code mobile akan otomatis menggunakan URL public
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="btn ghost" id="clear-tunnel">Clear Tunnel</button>
+          <button class="btn accent" id="save-tunnel">Simpan Tunnel</button>
+        </div>
       </div>
-  
-      <div class="modal-actions">
-        <button class="btn ghost" id="clear-tunnel">Clear (Use Local IP)</button>
-        <button class="btn accent" id="save-tunnel">Simpan URL</button>
+
+      <!-- System Reset Section -->
+      <div style="margin-top: 20px; padding: 16px; background: var(--bg); border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.2);">
+        <h4 style="margin: 0 0 10px 0; color: var(--red);">Reset Sistem</h4>
+        <p class="muted small">Hapus semua kamera, konfigurasi deteksi, dan pengaturan. Aksi ini tidak bisa dibatalkan!</p>
+        <button class="btn" id="btn-reset-system" style="background: var(--red); color: white; margin-top: 10px; width: 100%;">
+          Reset Seluruh Sistem
+        </button>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 16px;">
+        <button class="btn ghost" data-close>Tutup</button>
       </div>
     </div>
   </div>
 
   <script>
-document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
   const BACKEND_URL = "http://localhost:5000";
 
   const STORAGE_TUNNEL = "smart_parking_tunnel_url";
@@ -917,6 +884,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnClearAll = document.getElementById("btn-clear-all");
   const editStatus = document.getElementById("edit-status");
   const slotSummary = document.getElementById("slot-summary");
+
+  // === SETTINGS (Tunnel + Reset System) ===
+  const modalSettings = document.getElementById("modal-settings");
+  const btnSettings = document.getElementById("btn-settings");
+  const inputPublicUrl = document.getElementById("input-public-url");
+  const btnResetSystem = document.getElementById("btn-reset-system");
 
   let boxes = [];
   let redoStack = [];
@@ -1036,8 +1009,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupCanvas() {
     const container = overlayCanvas.parentElement;
-    overlayCanvas.width = container.offsetWidth;
-    overlayCanvas.height = container.offsetHeight;
+    const video = document.getElementById('video-preview');
+    
+    // Use video dimensions if available, otherwise use container
+    if (video && video.videoWidth > 0) {
+        overlayCanvas.width = video.videoWidth;
+        overlayCanvas.height = video.videoHeight;
+    } else {
+        overlayCanvas.width = container.offsetWidth;
+        overlayCanvas.height = container.offsetHeight;
+    }
+    
+    console.log('Canvas setup:', overlayCanvas.width, 'x', overlayCanvas.height);
   }
 
   function toggleEditMode() {
@@ -1146,6 +1129,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let empty = boxes.filter(b => b.status === "empty").length;
     let occupied = boxes.filter(b => b.status === "occupied").length;
     
+    // Tambah info di console saja, bukan di UI
+    console.log('Background set:', background_frame !== null);
+    
     slotSummary.textContent = `Total Slot: ${total} | Kosong: ${empty} | Terisi: ${occupied}`;
   }
 
@@ -1186,7 +1172,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (cam) {
         getStatus().catch(console.error);
       }
-    }, 1000);
+    }, 2000);
   }
 
   function stopStatusPolling(camId) {
@@ -1245,7 +1231,13 @@ document.addEventListener("DOMContentLoaded", () => {
       preview.className = "preview";
       
       const img = document.createElement("img");
-      img.src = `${BACKEND_URL}/video?t=${Date.now()}`;
+
+      if (cam.type === 'mobile' && cam.token) {
+        img.src = `${BACKEND_URL}/mobile_video/${cam.token}`;
+      } else {
+        img.src = `${BACKEND_URL}/video?cam=${cam.id}`;
+      }
+
       img.style.width = "100%";
       img.style.height = "100%";
       img.style.objectFit = "cover";
@@ -1260,6 +1252,23 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>`;
       };
       preview.appendChild(img);
+
+      // Force reload setiap 10 detik untuk prevent freeze
+      let refreshTimer = setInterval(() => {
+        if (img && img.parentElement) {
+          const currentSrc = img.src;
+          img.src = '';
+          setTimeout(() => {
+            if (cam.type === 'mobile' && cam.token) {
+              img.src = `${BACKEND_URL}/mobile_video/${cam.token}`;
+            } else {
+              img.src = `${BACKEND_URL}/video?cam=${cam.id}&t=${Date.now()}`;
+            }
+          }, 100);
+        } else {
+          clearInterval(refreshTimer);
+        }
+      }, 10000); // Refresh every 10 seconds
 
       const overlay = document.createElement("div");
       overlay.className = "pin-overlay";
@@ -1307,12 +1316,24 @@ document.addEventListener("DOMContentLoaded", () => {
         if (cam.type === 'mobile' && cam.token) {
           pinnedImg.src = `${BACKEND_URL}/mobile_video/${cam.token}`;
         } else {
-          pinnedImg.src = `${BACKEND_URL}/video?t=${Date.now()}`;
+          pinnedImg.src = `${BACKEND_URL}/video?cam=${cam.id}`;
         }
 
         pinnedImg.style.width = "100%";
         pinnedImg.style.height = "100%";
         pinnedImg.style.objectFit = "contain";
+
+        // Anti-freeze untuk pinned view
+        pinnedImg.onerror = () => {
+          console.warn('Pinned camera error, reloading...');
+          setTimeout(() => {
+            if (cam.type === 'mobile' && cam.token) {
+              pinnedImg.src = `${BACKEND_URL}/mobile_video/${cam.token}`;
+            } else {
+              pinnedImg.src = `${BACKEND_URL}/video?cam=${cam.id}&t=${Date.now()}`;
+            }
+          }, 2000);
+        };
         
         pinned.innerHTML = `<button class="unpin-btn" title="Unpin Kamera">${getIconSVG("pin", true)}</button>`;
         pinned.appendChild(pinnedImg);
@@ -1352,12 +1373,6 @@ document.addEventListener("DOMContentLoaded", () => {
     cameraIndex.value = "0";
     updateCameraTypeFields();
     modalAdd.classList.remove("hidden");
-  });
-
-  document.querySelectorAll("[data-preset]").forEach(btn => {
-    btn.onclick = () => {
-      inputName.value = btn.dataset.preset;
-    };
   });
 
   btnSave.addEventListener("click", async () => {
@@ -1434,6 +1449,13 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.keys(statusIntervals).forEach(camId => {
       stopStatusPolling(camId);
     });
+
+    // Auto-reset background when opening detection modal
+    setTimeout(() => {
+        resetBackground().then(() => {
+            console.log('Background auto-reset successful');
+        });
+    }, 1000); // Wait for camera to initialize
     
     currentCameraId = id;
     document.getElementById("detect-camera-name").textContent = cam.name;
@@ -1459,10 +1481,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setupCanvas();
         drawAll();
         updateSlotSummary();
-      }, 100);
+      }, 500);
       
       if (detectionInterval) clearInterval(detectionInterval);
-      detectionInterval = setInterval(getStatus, 1000);
+      detectionInterval = setInterval(getStatus, 2000);
       
       return; // PENTING: return agar tidak lanjut ke setCamera
     }
@@ -1486,10 +1508,10 @@ document.addEventListener("DOMContentLoaded", () => {
           setupCanvas();
           drawAll();
           updateSlotSummary();
-        }, 100);
+        }, 500);
         
         if (detectionInterval) clearInterval(detectionInterval);
-        detectionInterval = setInterval(getStatus, 1000);
+        detectionInterval = setInterval(getStatus, 2000);
       } else {
         alert("Gagal menghubungkan kamera untuk deteksi");
       }
@@ -1564,54 +1586,84 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Tunnel Settings
-  const modalTunnel = document.getElementById("modal-tunnel");
-  const btnTunnelSettings = document.getElementById("btn-tunnel-settings");
-  const inputPublicUrl = document.getElementById("input-public-url");
-
-  btnTunnelSettings.addEventListener("click", () => {
+  // === SETTINGS (Tunnel + Reset System) ===
+  btnSettings.addEventListener("click", () => {
     inputPublicUrl.value = publicUrl || "";
-    modalTunnel.classList.remove("hidden");
+    modalSettings.classList.remove("hidden");
   });
 
+  // Save Tunnel
   document.getElementById("save-tunnel").addEventListener("click", async () => {
     const url = inputPublicUrl.value.trim();
-  
+
     try {
       const response = await fetch(`${BACKEND_URL}/set_public_url`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({url: url})
       });
-    
+  
       const data = await response.json();
-    
+  
       if (data.status === 'ok') {
         publicUrl = url || null;
         localStorage.setItem(STORAGE_TUNNEL, publicUrl || '');
-        alert(url ? `Public URL set: ${url}` : 'Using local IP');
-        modalTunnel.classList.add("hidden");
+        alert(url ? `✓ Public URL berhasil disimpan:\n${url}` : '✓ Kembali menggunakan local IP');
       }
     } catch(err) {
-      alert('Error setting public URL: ' + err.message);
+      alert('✗ Error setting public URL: ' + err.message);
     }
   });
 
+  // Clear Tunnel
   document.getElementById("clear-tunnel").addEventListener("click", async () => {
+    if (!confirm("Hapus public URL dan kembali ke local IP?")) return;
+  
     try {
       await fetch(`${BACKEND_URL}/set_public_url`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({url: ''})
       });
-    
+  
       publicUrl = null;
       localStorage.removeItem(STORAGE_TUNNEL);
       inputPublicUrl.value = '';
-      alert('Public URL cleared. Using local IP now.');
-      modalTunnel.classList.add("hidden");
+      alert('✓ Public URL dihapus. Kembali menggunakan local IP.');
     } catch(err) {
-      alert('Error clearing URL: ' + err.message);
+      alert('✗ Error clearing URL: ' + err.message);
+    }
+  });
+
+  // Reset System
+  btnResetSystem.addEventListener("click", () => {
+    const confirmText = "Ketik 'RESET' untuk menghapus semua data:";
+    const userInput = prompt(confirmText);
+  
+    if (userInput === "RESET") {
+      // Stop semua polling
+      Object.keys(statusIntervals).forEach(camId => {
+        stopStatusPolling(camId);
+      });
+    
+      // Clear localStorage
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_PIN);
+      // STORAGE_THEME tidak dihapus agar tema tetap
+    
+      // Reset variables
+      cameras = [];
+      pinnedId = null;
+      statusIntervals = {};
+    
+      // Render ulang
+      saveState();
+      renderAll();
+
+      alert("✓ Sistem berhasil direset!\n\nSemua kamera dan konfigurasi telah dihapus.");
+      modalSettings.classList.add("hidden");
+    } else if (userInput !== null) {
+      alert("✗ Reset dibatalkan. Ketik 'RESET' dengan huruf kapital untuk konfirmasi.");
     }
   });
 

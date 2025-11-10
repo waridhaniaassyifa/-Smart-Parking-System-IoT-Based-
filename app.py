@@ -14,8 +14,9 @@ from threading import Thread
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
-
+socketio = SocketIO(app, cors_allowed_origins="*", 
+                   ping_timeout=60, ping_interval=25,
+                   max_http_buffer_size=10000000)
 # variable global untuk mobile camera
 mobile_frames = {}  # Store frames from mobile: {token: frame_data}
 mobile_tokens = {}  # Store active tokens: {token: timestamp}
@@ -28,30 +29,77 @@ background_frame = None
 slots = []
 PUBLIC_URL = None
 LOCAL_IP = None
+active_camera_id = None
+camera_lock = False
+placeholder_frame = None
+
+def init_placeholder():
+    global placeholder_frame
+    if placeholder_frame is None:
+        temp = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.putText(temp, "Waiting for mobile...", (150, 240), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        _, buffer = cv2.imencode('.jpg', temp)
+        placeholder_frame = buffer.tobytes()
 
 def get_camera():
     global cap, camera_url, DEFAULT_WEBCAM_INDEX
     if cap is None or not cap.isOpened():
-        if camera_url:  # IP Camera
-            print(f"Connecting to IP camera: {camera_url}")
-            cap = cv2.VideoCapture(camera_url)
-            # Set buffer size to reduce latency for IP cameras
-            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        else:  # webcam / DroidCam
-            print(f"Connecting to webcam index: {DEFAULT_WEBCAM_INDEX}")
-            cap = cv2.VideoCapture(DEFAULT_WEBCAM_INDEX)
+        max_retries = 3
+        retry_delay = 1  # detik
         
-        # JANGAN fallback ke index 0 otomatis - biarkan gagal dengan jelas
-        if not cap.isOpened():
-            print(f"ERROR: Kamera di index {DEFAULT_WEBCAM_INDEX} tidak tersedia!")
-            print(f"Tip: Pastikan DroidCam Client berjalan dan kabel USB stabil")
-            return None
+        for attempt in range(max_retries):
+            try:
+                if camera_url:  # IP Camera
+                    print(f"Connecting to IP camera: {camera_url} (attempt {attempt + 1}/{max_retries})")
+                    
+                    # Tambah timeout dan buffer untuk IP camera
+                    cap = cv2.VideoCapture(camera_url, cv2.CAP_FFMPEG)
+                    
+                    # Set properties untuk IP camera
+                    cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+                    cap.set(cv2.CAP_PROP_FPS, 30)
+                    
+                else:  # webcam / DroidCam
+                    print(f"Connecting to webcam index: {DEFAULT_WEBCAM_INDEX} (attempt {attempt + 1}/{max_retries})")
+                    cap = cv2.VideoCapture(DEFAULT_WEBCAM_INDEX)
+                
+                # Test apakah kamera benar-benar bisa dibaca
+                if cap.isOpened():
+                    ret, test_frame = cap.read()
+                    if ret and test_frame is not None:
+                        # Set properties untuk performa
+                        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                        cap.set(cv2.CAP_PROP_FPS, 30)
+                        
+                        print(f"✓ Camera opened successfully! Frame shape: {test_frame.shape}")
+                        return cap
+                    else:
+                        print(f"✗ Camera opened but cannot read frame")
+                        cap.release()
+                        cap = None
+                else:
+                    print(f"✗ Camera failed to open")
+                    cap = None
+                
+                # Retry dengan delay
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    
+            except Exception as e:
+                print(f"✗ Error opening camera: {str(e)}")
+                if cap:
+                    cap.release()
+                cap = None
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
         
-        # Set camera properties for better performance
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        cap.set(cv2.CAP_PROP_FPS, 30)
-        print(f"Camera opened successfully!")
+        # Jika semua retry gagal
+        print(f"ERROR: Failed to open camera after {max_retries} attempts")
+        print(f"Camera URL: {camera_url}, Webcam Index: {DEFAULT_WEBCAM_INDEX}")
+        return None
     
     return cap
 
@@ -89,53 +137,58 @@ def index():
 
 @app.route("/set_camera", methods=["POST"])
 def set_camera():
-    global cap, camera_url, DEFAULT_WEBCAM_INDEX, background_frame
+    global cap, camera_url, DEFAULT_WEBCAM_INDEX, background_frame, camera_lock
     data = request.get_json()
     ip = data.get("ip")
     idx = data.get("index")
 
     print(f"Setting camera - IP: {ip}, Index: {idx}")
 
-    # Release current camera
-    if cap is not None:
-        cap.release()
-        cap = None
-        time.sleep(0.5)  # Give time for camera to release
-
-    # Set new camera
-    camera_url = ip if ip else None
-    if idx is not None and not ip:
-        try:
-            DEFAULT_WEBCAM_INDEX = int(idx)
-        except:
-            DEFAULT_WEBCAM_INDEX = 0
-
-    # Reset background when camera changes
-    background_frame = None
+    # Lock to prevent race conditions
+    camera_lock = True
     
-    # Initialize new camera
-    cam = get_camera()
-    if cam.isOpened():
-        # Test read to ensure camera works
-        ret, frame = cam.read()
-        if ret:
-            print(f"Camera test successful! Frame shape: {frame.shape}")
-            return jsonify({
-                "status": "ok", 
-                "camera": camera_url or f"webcam {DEFAULT_WEBCAM_INDEX}",
-                "resolution": f"{frame.shape[1]}x{frame.shape[0]}"
-            })
+    try:
+        # Release current camera
+        if cap is not None:
+            cap.release()
+            cap = None
+            time.sleep(0.5)
+
+        # Set new camera
+        camera_url = ip if ip else None
+        if idx is not None and not ip:
+            try:
+                DEFAULT_WEBCAM_INDEX = int(idx)
+            except:
+                DEFAULT_WEBCAM_INDEX = 0
+
+        # Reset background when camera changes
+        background_frame = None
+        
+        # Initialize new camera
+        cam = get_camera()
+        if cam and cam.isOpened():
+            ret, frame = cam.read()
+            if ret:
+                print(f"Camera test successful! Frame shape: {frame.shape}")
+                return jsonify({
+                    "status": "ok", 
+                    "camera": camera_url or f"webcam {DEFAULT_WEBCAM_INDEX}",
+                    "resolution": f"{frame.shape[1]}x{frame.shape[0]}"
+                })
+            else:
+                print("Camera opened but cannot read frame")
+                return jsonify({
+                    "status": "error", 
+                    "message": "Camera opened but cannot read frame"
+                }), 400
         else:
-            print("Camera opened but cannot read frame")
             return jsonify({
                 "status": "error", 
-                "message": "Camera opened but cannot read frame"
+                "message": "Failed to open camera"
             }), 400
-    else:
-        return jsonify({
-            "status": "error", 
-            "message": "Failed to open camera"
-        }), 400
+    finally:
+        camera_lock = False
 
 @app.route("/generate_mobile_link", methods=["POST"])
 def generate_mobile_link():
@@ -177,9 +230,64 @@ def generate_mobile_link():
 
 @app.route("/mobile/<token>")
 def mobile_camera(token):
-    """Mobile camera page"""
+    """Mobile camera page - hanya bisa diakses via tunnel"""
     if token not in mobile_tokens:
         return "Invalid or expired token", 403
+    
+    # Cek apakah menggunakan tunnel (bukan localhost/IP lokal)
+    host = request.host.lower()
+    if 'localhost' in host or '127.0.0.1' in host or host.startswith('192.168.') or host.startswith('10.'):
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Tunnel Required</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background: #000;
+                    color: #fff;
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                }
+                .container {
+                    max-width: 500px;
+                    padding: 30px;
+                    background: #1a1a1a;
+                    border-radius: 10px;
+                }
+                h2 { color: #ef4444; }
+                code {
+                    background: #333;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    color: #4ade80;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>⚠️ Cloudflare Tunnel Required</h2>
+                <p>Mobile camera hanya bisa diakses melalui Cloudflare Tunnel.</p>
+                <br>
+                <p><strong>Cara menggunakan:</strong></p>
+                <ol style="text-align: left;">
+                    <li>Jalankan: <code>cloudflared tunnel --url http://localhost:5000</code></li>
+                    <li>Set URL public di Settings</li>
+                    <li>Generate ulang QR code</li>
+                    <li>Scan QR dengan HP Anda</li>
+                </ol>
+            </div>
+        </body>
+        </html>
+        """, 403
     
     return render_template("mobile.html", token=token)
 
@@ -193,13 +301,8 @@ def mobile_video(token):
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_data + b'\r\n')
             else:
-                # Kirim placeholder jika belum ada frame
-                placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
-                cv2.putText(placeholder, "Waiting for mobile...", (150, 240), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                _, buffer = cv2.imencode('.jpg', placeholder)
                 yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+                       b'Content-Type: image/jpeg\r\n\r\n' + placeholder_frame + b'\r\n')
             time.sleep(0.1)
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -280,7 +383,7 @@ def detect_parking_status(frame):
         change_ratio = change_pixels / total_pixels if total_pixels > 0 else 0
         
         # Determine status based on change ratio
-        threshold = 0.05  # 5% change threshold
+        threshold = 0.05  # 5% change threshold (lebih sensitif)
         results[slot["id"]] = "occupied" if change_ratio > threshold else "empty"
 
     return results
@@ -288,62 +391,80 @@ def detect_parking_status(frame):
 @app.route("/video")
 def video():
     def generate():
+        global camera_lock
+        
+        # Wait if camera is being switched
+        retry = 0
+        while camera_lock and retry < 50:
+            time.sleep(0.1)
+            retry += 1
+
         cam = get_camera()
         consecutive_failures = 0
-        max_failures = 30
+        max_failures = 30  # Kurangi dari 60 ke 30 untuk reconnect lebih cepat
         reconnect_attempts = 0
-        max_reconnect = 5
+        max_reconnect = 999
+        frame_skip = 0  # Counter untuk skip frame jika IP camera lambat
         
         while True:
             if cam is None or not cam.isOpened():
-                if reconnect_attempts >= max_reconnect:
-                    # UBAH INI: Jangan break, kirim placeholder image
-                    print("Max reconnect attempts reached. Sending placeholder...")
-                    
-                    # Buat frame hitam dengan teks error
-                    placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
-                    cv2.putText(placeholder, "Camera Disconnected", (150, 240), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                    _, buffer = cv2.imencode('.jpg', placeholder)
-                    
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-                    
-                    # Reset dan coba lagi setelah delay
-                    time.sleep(5)
-                    reconnect_attempts = 0
-                    cam = get_camera()
-                    continue
-                
                 print(f"Camera disconnected. Reconnect attempt {reconnect_attempts + 1}/{max_reconnect}")
                 time.sleep(2)
                 cam = get_camera()
                 reconnect_attempts += 1
                 consecutive_failures = 0
+                frame_skip = 0
                 continue
             
-            ret, frame = cam.read()
-            if not ret:
+            try:
+                # Untuk IP camera, skip frame jika buffer penuh
+                if camera_url and frame_skip > 0:
+                    cam.grab()  # Skip frame tanpa decode
+                    frame_skip -= 1
+                    continue
+                
+                ret, frame = cam.read()
+                
+                if not ret or frame is None:
+                    consecutive_failures += 1
+                    print(f"Failed to read frame (attempt {consecutive_failures}/{max_failures})")
+                    
+                    if consecutive_failures >= max_failures:
+                        print("Too many failures, releasing camera...")
+                        if cam is not None:
+                            cam.release()
+                        cam = None
+                        consecutive_failures = 0
+                        frame_skip = 0
+                    else:
+                        time.sleep(0.1)
+                    continue
+                
+                # Reset counters jika berhasil
+                consecutive_failures = 0
+                reconnect_attempts = 0
+                
+                # Untuk IP camera, set skip untuk frame berikutnya (reduce lag)
+                if camera_url:
+                    frame_skip = 2  # Skip 2 frame berikutnya
+                
+                # Resize jika frame terlalu besar (untuk IP camera HD)
+                height, width = frame.shape[:2]
+                if width > 1280:
+                    scale = 1280 / width
+                    frame = cv2.resize(frame, None, fx=scale, fy=scale)
+                
+                time.sleep(0.033)  # ~30 FPS
+                    
+                _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+                       
+            except Exception as e:
+                print(f"Error in video stream: {str(e)}")
                 consecutive_failures += 1
-                print(f"Failed to read frame (attempt {consecutive_failures}/{max_failures})")
-                
-                if consecutive_failures >= max_failures:
-                    print("Too many failures, releasing camera...")
-                    if cam is not None:  # TAMBAHKAN pengecekan
-                        cam.release()
-                    cam = None
-                    consecutive_failures = 0
-                else:
-                    time.sleep(0.1)
-                continue
-            
-            consecutive_failures = 0
-            reconnect_attempts = 0
-                
-            _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
-            
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+                time.sleep(0.1)
                    
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -454,6 +575,7 @@ if __name__ == "__main__":
         print("⚠ Cloudflare tunnel detected!")
         print("Set public URL via: POST /set_public_url")
     
+    init_placeholder()
     print("Testing available cameras...")
     
     # Test available cameras on startup
