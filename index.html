@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <title>Sistem Parkir Cerdas</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+:root {
+  --bg: #f5f6f8;
+  --text: #0b1020;
+  --card: #fff;
+  --muted: #8b8f98;
+  --accent: #0b1020;
+  --accent-contrast: #fff;
+  --green: #16a34a;
+  --red: #ef4444;
+  --blue: #2563eb;
+  --shadow: 0 6px 18px rgba(11,16,32,0.06);
+  --radius: 12px;
+}
+
+body.dark {
+  --bg: #0f1115;
+  --text: #f8fafc;
+  --card: #121318;
+  --muted: #9ca3af;
+  --accent: #eef2ff;
+  --accent-contrast: #0f1724;
+  --shadow: 0 6px 22px rgba(0,0,0,0.6);
+}
+
+* { 
+  box-sizing: border-box; 
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+}
+
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  background: var(--bg); 
+  color: var(--text); 
+  -webkit-font-smoothing: antialiased; 
+  -moz-osx-font-smoothing: grayscale; 
+  overflow-x: hidden;
+}
+
+.dashboard { 
+  max-width: 1400px; 
+  margin: 0 auto; 
+  padding: 20px 24px; 
+  min-height: 100vh; 
+}
+
+header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 12px; 
+  flex-wrap: wrap; 
+}
+
+.brand { 
+  display: flex; 
+  gap: 12px; 
+  align-items: center; 
+}
+
+.logo-box { 
+  width: 46px; 
+  height: 46px; 
+  border-radius: 10px; 
+  background: var(--card); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  box-shadow: var(--shadow); 
+}
+
+.brand h1 { 
+  margin: 0; 
+  font-size: 18px; 
+}
+
+.brand p { 
+  margin: 0; 
+  font-size: 12px; 
+  color: var(--muted); 
+}
+
+.controls { 
+  display: flex; 
+  gap: 10px; 
+  align-items: center; 
+  flex-wrap: wrap; 
+}
+
+.btn { 
+  border: none; 
+  padding: 8px 14px; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  box-shadow: var(--shadow); 
+  transition: all .18s ease; 
+  background: var(--accent); 
+  color: var(--accent-contrast); 
+}
+
+.btn.ghost { 
+  background: var(--card); 
+  color: var(--accent); 
+  border: 1px solid rgba(0,0,0,0.06); 
+}
+
+body.dark .btn.ghost { 
+  border: 1px solid rgba(255,255,255,0.08); 
+}
+
+.btn.accent { 
+  background: var(--accent); 
+  color: var(--accent-contrast); 
+}
+
+.btn:hover { 
+  opacity: 0.9; 
+  transform: translateY(-1px); 
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.switch { 
+  position: relative; 
+  display: inline-block; 
+  width: 44px; 
+  height: 26px; 
+}
+
+.switch input { 
+  display: none; 
+}
+
+.slider { 
+  position: absolute; 
+  inset: 0; 
+  background: #e6e7ee; 
+  border-radius: 999px; 
+  transition: all .2s ease; 
+}
+
+.slider:before { 
+  content: ''; 
+  position: absolute; 
+  left: 4px; 
+  top: 4px; 
+  width: 18px; 
+  height: 18px; 
+  background: #fff; 
+  border-radius: 50%; 
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12); 
+  transition: all .2s ease; 
+}
+
+.switch input:checked + .slider { 
+  background: #111827; 
+}
+
+.switch input:checked + .slider:before { 
+  transform: translateX(18px); 
+}
+
+.cards { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+  gap: 14px; 
+  margin-top: 18px; 
+}
+
+.card.stat-card { 
+  padding: 16px; 
+  background: var(--card); 
+  border-radius: 12px; 
+  box-shadow: var(--shadow); 
+  border: 1px solid rgba(0,0,0,0.03); 
+}
+
+body.dark .card.stat-card { 
+  border: 1px solid rgba(255,255,255,0.05); 
+}
+
+.stat-value { 
+  font-size: 26px; 
+  font-weight: 800; 
+  margin-top: 4px; 
+}
+
+.stat-sub { 
+  color: var(--muted); 
+  font-size: 12px; 
+  margin-top: 8px; 
+}
+
+.stat-value.green { 
+  color: var(--green); 
+}
+
+.stat-value.red { 
+  color: var(--red); 
+}
+
+.pinned { 
+  margin-top: 20px; 
+  border-radius: 12px; 
+  background: var(--card); 
+  box-shadow: var(--shadow); 
+  height: 420px; 
+  overflow: hidden; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  border: 1px solid rgba(0,0,0,0.04); 
+  position: relative; 
+}
+
+body.dark .pinned { 
+  border: 1px solid rgba(255,255,255,0.05); 
+}
+
+.hidden { 
+  display: none !important; 
+}
+
+.preview-big { 
+  width: 100%; 
+  height: 100%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  position: relative; 
+}
+
+.preview-big img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pinned .unpin-btn {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  z-index: 10;
+  background: rgba(255,255,255,0.9);
+  border-radius: 10px;
+  padding: 6px 10px;
+  border: none;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+body.dark .pinned .unpin-btn { 
+  background: rgba(18,18,20,0.9); 
+  color: var(--text); 
+}
+
+.camera-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+  gap: 16px; 
+  margin-top: 18px; 
+}
+
+.camera { 
+  background: var(--card); 
+  border-radius: 12px; 
+  box-shadow: var(--shadow); 
+  border: 1px solid rgba(0,0,0,0.04); 
+  overflow: hidden; 
+  display: flex; 
+  flex-direction: column; 
+  position: relative; 
+  cursor: move; 
+}
+
+body.dark .camera { 
+  border: 1px solid rgba(255,255,255,0.05); 
+}
+
+.camera.dragging { 
+  opacity: 0.5; 
+}
+
+.camera .preview { 
+  height: 220px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  position: relative; 
+  overflow: hidden;
+  background: #000;
+}
+
+.camera .preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera .preview .pin-overlay {
+  position: absolute; 
+  inset: 0; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  pointer-events: none; 
+  opacity: 0; 
+  transition: opacity .12s ease;
+  background: rgba(0,0,0,0.3);
+}
+
+.camera .preview:hover .pin-overlay { 
+  opacity: 1; 
+  pointer-events: auto; 
+}
+
+.pin-button {
+  background: rgba(255,255,255,0.9); 
+  border-radius: 10px; 
+  padding: 8px 12px; 
+  font-weight: 600; 
+  cursor: pointer; 
+  border: none; 
+  box-shadow: var(--shadow);
+}
+
+body.dark .pin-button { 
+  background: rgba(18,18,20,0.9); 
+  color: var(--text); 
+}
+
+.camera .meta { 
+  padding: 10px 12px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  gap: 10px; 
+}
+
+.camera .meta .name { 
+  font-weight: 600; 
+}
+
+.camera .meta .actions { 
+  display: flex; 
+  gap: 8px; 
+  align-items: center; 
+}
+
+.icon-btn { 
+  width: 36px; 
+  height: 36px; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  border-radius: 8px; 
+  background: transparent; 
+  border: none; 
+  cursor: pointer; 
+  color: var(--muted); 
+}
+
+.icon-btn:hover { 
+  background: rgba(0,0,0,0.03); 
+  color: var(--text); 
+}
+
+body.dark .icon-btn:hover { 
+  background: rgba(255,255,255,0.08); 
+}
+
+.camera .stats { 
+  display: flex; 
+  justify-content: space-between; 
+  padding: 8px 12px 14px; 
+  color: var(--muted); 
+  font-size: 13px; 
+  border-top: 1px dashed rgba(0,0,0,0.03); 
+}
+
+body.dark .camera .stats { 
+  border-top: 1px dashed rgba(255,255,255,0.08); 
+}
+
+.stat-item { 
+  display: inline-block; 
+  margin-right: 8px; 
+}
+
+.modal-backdrop { 
+  position: fixed; 
+  inset: 0; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background: rgba(9,10,12,0.45); 
+  z-index: 60; 
+  padding: 20px; 
+  transition: opacity .18s ease; 
+}
+
+body.dark .modal-backdrop { 
+  background: rgba(0,0,0,0.7); 
+}
+
+.card-modal { 
+  background: var(--card); 
+  width: 100%; 
+  max-width: 520px; 
+  border-radius: 12px; 
+  padding: 18px; 
+  box-shadow: var(--shadow); 
+  position: relative; 
+  border: 1px solid rgba(0,0,0,0.05); 
+  animation: pop .18s ease; 
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+body.dark .card-modal { 
+  border: 1px solid rgba(255,255,255,0.08); 
+}
+
+.card-modal.wide { 
+  max-width: 900px; 
+}
+
+.modal-close { 
+  position: absolute; 
+  right: 10px; 
+  top: 8px; 
+  background: transparent; 
+  border: none; 
+  font-size: 20px; 
+  cursor: pointer; 
+  color: var(--muted); 
+}
+
+.muted { 
+  color: var(--muted); 
+}
+
+.field { 
+  margin-top: 12px; 
+  display: block; 
+}
+
+.field .label { 
+  font-size: 13px; 
+  margin-bottom: 6px; 
+  color: var(--muted); 
+}
+
+.field input, .field select { 
+  width: 100%; 
+  padding: 10px 12px; 
+  border-radius: 10px; 
+  border: 1px solid rgba(0,0,0,0.06); 
+  background: var(--card); 
+  color: var(--text); 
+}
+
+body.dark .field input, body.dark .field select { 
+  border: 1px solid rgba(255,255,255,0.1); 
+  background: var(--bg); 
+}
+
+.field input:focus, .field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.detection-sim { 
+  margin-top: 12px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+
+#video-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: crosshair;
+  width: 100%;
+  height: 100%;
+}
+
+.detection-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.detection-controls .btn {
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.legend { 
+  display: flex; 
+  gap: 14px; 
+  align-items: center; 
+  color: var(--muted); 
+  font-size: 13px; 
+  margin-top: 8px;
+}
+
+.modal-actions { 
+  margin-top: 16px; 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 12px; 
+}
+
+.card-modal h3 { 
+  margin: 0 0 6px; 
+}
+
+.small { 
+  font-size: 12px; 
+}
+
+.preset-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+  margin-top: 12px; 
+}
+
+.preset-btn { 
+  background: var(--card); 
+  border: 1px solid rgba(0,0,0,0.06); 
+  padding: 10px 12px; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  text-align: left; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  transition: all .15s ease;
+  color: var(--text);
+}
+
+body.dark .preset-btn { 
+  border: 1px solid rgba(255,255,255,0.1); 
+  background: var(--bg);
+}
+
+.preset-btn:hover { 
+  background: var(--bg); 
+  border-color: var(--accent);
+}
+
+body.dark .preset-btn:hover { 
+  background: var(--card); 
+}
+
+@keyframes pop { 
+  from { 
+      transform: translateY(8px) scale(.98); 
+      opacity: 0; 
+  } 
+  to { 
+      transform: translateY(0) scale(1); 
+      opacity: 1; 
+  } 
+}
+
+@media (max-width: 980px) {
+  .camera-grid { 
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+  }
+  .pinned { 
+      height: 280px; 
+  }
+  .dashboard { 
+      padding: 16px; 
+  }
+}
+
+@media (max-width: 640px) {
+  .camera-grid { 
+      grid-template-columns: 1fr; 
+  }
+  .cards { 
+      grid-template-columns: 1fr 1fr; 
+  }
+  header {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+  .controls {
+      width: 100%;
+      justify-content: space-between;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <div class="brand">
+        <div class="logo-box" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="6" width="18" height="15" rx="2"></rect>
+            <path d="M16 3h-4l-1 3"></path>
+            <circle cx="12" cy="13" r="3.2"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1>Sistem Parkir Cerdas</h1>
+          <p>IoT-based Smart Parking System</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="small-controls">
+          <label class="switch" title="Toggle dark/light">
+            <input type="checkbox" id="theme-toggle" />
+            <span class="slider" aria-hidden="true"></span>
+          </label>
+        </div>
+        <button id="btn-add-camera" class="btn accent">Tambah Kamera</button>
+        <button id="btn-tunnel-settings" class="btn ghost">⚙️ Tunnel</button>
+      </div>
+    </header>
+
+    <section class="cards" id="stat-cards">
+      <div class="card stat-card">
+        <small>Total Kapasitas</small>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-sub">Area parkir tersedia</div>
+      </div>
+      <div class="card stat-card">
+        <small>Tempat Kosong</small>
+        <div class="stat-value green" id="stat-empty">0</div>
+        <div class="stat-sub">Siap digunakan</div>
+      </div>
+      <div class="card stat-card">
+        <small>Tempat Terisi</small>
+        <div class="stat-value red" id="stat-occupied">0</div>
+        <div class="stat-sub">Sedang digunakan</div>
+      </div>
+      <div class="card stat-card">
+        <small>Tingkat Hunian</small>
+        <div class="stat-value" id="stat-rate">0%</div>
+        <div class="stat-sub">0 kamera aktif</div>
+      </div>
+    </section>
+
+    <section id="pinned-section" class="pinned hidden"></section>
+    <section id="camera-grid" class="camera-grid"></section>
+  </div>
+
+  <!-- Modal: Tambah Kamera -->
+  <div class="modal-backdrop hidden" id="modal-add">
+    <div class="modal card-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h3>Tambah Kamera Parkir</h3>
+      <p class="muted small">Tambahkan kamera IoT untuk memantau area parkir</p>
+
+      <label class="field">
+        <div class="label">Nama Kamera</div>
+        <input id="input-camera-name" placeholder="Masukkan nama kamera" />
+      </label>
+
+      <label class="field">
+        <div class="label">Tipe Kamera</div>
+        <select id="camera-type">
+          <option value="webcam">Webcam / DroidCam</option>
+          <option value="ip">IP Camera</option>
+          <option value="mobile">Mobile Camera</option>
+        </select>
+      </label>
+
+      <label class="field" id="field-webcam-index">
+        <div class="label">Pilih Kamera</div>
+        <select id="camera-index">
+          <option value="0">0 - Webcam Bawaan</option>
+          <option value="1">1 - DroidCam</option>
+          <option value="2">2 - Kamera lain</option>
+        </select>
+      </label>
+
+      <label class="field hidden" id="field-ip-url">
+        <div class="label">URL / IP Kamera</div>
+        <input id="input-camera-url" placeholder="http://192.168.1.100:4747/video" />
+      </label>
+
+      <label class="field hidden" id="field-mobile">
+        <div class="label">QR Code untuk HP</div>
+        <div id="qr-container" style="text-align:center; padding:20px;">
+          <img id="qr-image" style="max-width:250px;">
+          <p id="mobile-url" style="word-break:break-all; font-size:12px;"></p>
+        </div>
+      </label>
+
+      <div class="muted small" style="margin-top:8px;">Atau pilih preset:</div>
+      <div class="preset-list">
+        <button class="preset-btn" data-preset="Kamera Utama">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2"></rect><circle cx="12" cy="13" r="3.2"></circle></svg>
+          Kamera Utama
+        </button>
+        <button class="preset-btn" data-preset="Kamera Pintu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2"></rect><circle cx="12" cy="13" r="3.2"></circle></svg>
+          Kamera Pintu
+        </button>
+        <button class="preset-btn" data-preset="Kamera Samping">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="15" rx="2"></rect><circle cx="12" cy="13" r="3.2"></circle></svg>
+          Kamera Samping
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn ghost" data-close>Batal</button>
+        <button class="btn accent" id="save-camera">Tambah Kamera</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Kamera -->
+  <div class="modal-backdrop hidden" id="modal-edit">
+    <div class="modal card-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h3>Edit Kamera Parkir</h3>
+      <p class="muted small">Ubah informasi kamera</p>
+
+      <label class="field">
+        <div class="label">Nama Kamera</div>
+        <input id="input-edit-name" placeholder="Masukkan nama kamera" />
+      </label>
+
+      <div class="modal-actions">
+        <button class="btn ghost" data-close>Batal</button>
+        <button class="btn accent" id="save-edit">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Atur Area Deteksi -->
+  <div class="modal-backdrop hidden" id="modal-detect">
+    <div class="modal card-modal wide" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h3>Atur Area Deteksi - <span id="detect-camera-name"></span></h3>
+      <p class="muted small">Klik dan drag untuk menggambar area deteksi parkir</p>
+
+      <div class="detection-sim">
+        <div class="video-container">
+          <img id="video-preview" alt="Camera Feed">
+          <canvas id="overlay-canvas"></canvas>
+        </div>
+
+        <div class="detection-controls">
+          <button class="btn accent" id="btn-reset-bg">🔄 Reset Background</button>
+          <button class="btn" id="btn-edit-mode">🔧 Edit Mode: <span id="edit-status">OFF</span></button>
+          <button class="btn ghost" id="btn-undo">↩ Undo</button>
+          <button class="btn ghost" id="btn-redo">↪ Redo</button>
+          <button class="btn ghost" id="btn-clear-all">🗑️ Clear All</button>
+        </div>
+
+        <div id="slot-summary" style="margin-top:10px; font-weight:bold; color: var(--text);">
+          Total Slot: 0 | Kosong: 0 | Terisi: 0
+        </div>
+
+        <div class="legend">
+          <div><span style="color:var(--red)">●</span> Kosong (Empty)</div>
+          <div><span style="color:var(--green)">●</span> Terisi (Occupied)</div>
+          <div><span style="color:var(--blue)">●</span> Sedang Digambar</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn ghost" data-close>Batal</button>
+        <button class="btn accent" id="save-detect">Simpan Konfigurasi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Konfirmasi Hapus -->
+  <div class="modal-backdrop hidden" id="modal-confirm">
+    <div class="modal card-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h3>Hapus Kamera?</h3>
+      <p class="muted small">Yakin ingin menghapus kamera "<strong id="delete-camera-name"></strong>"? Aksi ini tidak bisa dibatalkan.</p>
+      <div class="modal-actions">
+        <button class="btn ghost" data-close>Batal</button>
+        <button class="btn" id="confirm-delete" style="background:#ef4444;color:#fff">Hapus</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal: Tunnel Settings -->
+  <div class="modal-backdrop hidden" id="modal-tunnel">
+    <div class="modal card-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h3>Cloudflare Tunnel Settings</h3>
+      <p class="muted small">Set public URL untuk akses mobile via internet</p>
+  
+      <label class="field">
+        <div class="label">Public URL (dari cloudflared)</div>
+        <input id="input-public-url" placeholder="https://xxx.trycloudflare.com" />
+      </label>
+  
+      <div class="muted small" style="margin-top:8px;">
+        <strong>Cara menggunakan:</strong><br>
+        1. Jalankan: <code>cloudflared tunnel --url http://localhost:5000</code><br>
+        2. Copy URL yang muncul (contoh: https://xxx.trycloudflare.com)<br>
+        3. Paste di atas dan klik Simpan<br>
+        4. QR code akan otomatis menggunakan URL public
+      </div>
+  
+      <div class="modal-actions">
+        <button class="btn ghost" id="clear-tunnel">Clear (Use Local IP)</button>
+        <button class="btn accent" id="save-tunnel">Simpan URL</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const BACKEND_URL = "http://localhost:5000";
+
+  const STORAGE_TUNNEL = "smart_parking_tunnel_url";
+  let publicUrl = localStorage.getItem(STORAGE_TUNNEL) || null;
+
+  // Set public URL saat startup jika ada
+  if (publicUrl) {
+    fetch(`${BACKEND_URL}/set_public_url`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url: publicUrl})
+    }).catch(console.error);
+  }
+  
+  function getIconSVG(name, active = false) {
+    const icons = {
+      pin: active
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l5 5-3 3-2-2-5 5 2 2-6 6-2-2 6-6-2-2 5-5-2-2 3-3z"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l5 5-3 3-2-2-5 5 2 2-6 6-2-2 6-6-2-2 5-5-2-2 3-3z"/></svg>`,
+      edit: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`,
+      delete: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
+      detect: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.31 8l5.74 9.94"/><path d="M9.69 8h11.48"/><path d="M7.38 12l5.74-9.94"/><path d="M9.69 16L3.95 6.06"/><path d="M14.31 16H2.83"/><path d="M16.62 12l-5.74 9.94"/></svg>`
+    };
+    return icons[name] || "";
+  }
+
+  const STORAGE_KEY = "smart_parking_cameras";
+  const STORAGE_PIN = "smart_parking_pinned";
+  const STORAGE_THEME = "smart_parking_theme";
+
+  let cameras = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  let pinnedId = localStorage.getItem(STORAGE_PIN) || null;
+  let currentCameraId = null;
+  let statusIntervals = {};
+
+  const grid = document.getElementById("camera-grid");
+  const pinnedSection = document.getElementById("pinned-section");
+  const modalAdd = document.getElementById("modal-add");
+  const modalEdit = document.getElementById("modal-edit");
+  const modalDetect = document.getElementById("modal-detect");
+  const modalConfirm = document.getElementById("modal-confirm");
+  const inputName = document.getElementById("input-camera-name");
+  const cameraType = document.getElementById("camera-type");
+  const cameraIndex = document.getElementById("camera-index");
+  const inputUrl = document.getElementById("input-camera-url");
+  const fieldWebcamIndex = document.getElementById("field-webcam-index");
+  const fieldIpUrl = document.getElementById("field-ip-url");
+  
+  const inputEditName = document.getElementById("input-edit-name");
+  
+  const themeToggle = document.getElementById("theme-toggle");
+  const btnAdd = document.getElementById("btn-add-camera");
+  const btnSave = document.getElementById("save-camera");
+  const btnSaveEdit = document.getElementById("save-edit");
+  let deleteTarget = null;
+  let editingCameraId = null;
+  let draggedElement = null;
+
+  // Detection canvas variables
+  const videoPreview = document.getElementById("video-preview");
+  const overlayCanvas = document.getElementById("overlay-canvas");
+  const ctx = overlayCanvas.getContext("2d");
+  const btnResetBg = document.getElementById("btn-reset-bg");
+  const btnEditMode = document.getElementById("btn-edit-mode");
+  const btnUndo = document.getElementById("btn-undo");
+  const btnRedo = document.getElementById("btn-redo");
+  const btnClearAll = document.getElementById("btn-clear-all");
+  const editStatus = document.getElementById("edit-status");
+  const slotSummary = document.getElementById("slot-summary");
+
+  let boxes = [];
+  let redoStack = [];
+  let currentBox = null;
+  let editMode = false;
+  let boxCount = 0;
+  let isDrawing = false;
+  let startX, startY;
+  let detectionInterval = null;
+
+  function updateCameraTypeFields() {
+    fieldWebcamIndex.classList.add('hidden');
+    fieldIpUrl.classList.add('hidden');
+    document.getElementById('field-mobile').classList.add('hidden');
+    
+    if (cameraType.value === 'ip') {
+        fieldIpUrl.classList.remove('hidden');
+    } else if (cameraType.value === 'mobile') {
+        document.getElementById('field-mobile').classList.remove('hidden');
+        generateMobileLink();
+    } else {
+        fieldWebcamIndex.classList.remove('hidden');
+    }
+  }
+
+  async function generateMobileLink() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/generate_mobile_link`, {method: 'POST'});
+        const data = await res.json();
+        
+        document.getElementById('qr-image').src = data.qr_code;
+        document.getElementById('mobile-url').textContent = data.url;
+        
+        // Simpan token untuk digunakan
+        window.currentMobileToken = data.token;
+    } catch(err) {
+        console.error('Error generating mobile link:', err);
+    }
+}
+
+  cameraType.addEventListener('change', updateCameraTypeFields);
+  updateCameraTypeFields();
+
+  async function setCamera(ip, index) {
+    try {
+      const response = await fetch(`${BACKEND_URL}/set_camera`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ip: ip, index: index})
+      });
+      const data = await response.json();
+      console.log("Camera set:", data);
+      return data.status === "ok";
+    } catch(error) {
+      console.error("Error setting camera:", error);
+      return false;
+    }
+  }
+
+  async function resetBackground() {
+    try {
+      const response = await fetch(`${BACKEND_URL}/reset_background`, {method:"POST"});
+      const data = await response.json();
+      alert(data.message || "Background reset!");
+      return data.status === "ok";
+    } catch(error) {
+      console.error("Error resetting background:", error);
+      alert("Error resetting background");
+      return false;
+    }
+  }
+
+  async function updateSlots() {
+    try {
+      await fetch(`${BACKEND_URL}/update_slots`, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({slots: boxes})
+      });
+    } catch(error) {
+      console.error("Error updating slots:", error);
+    }
+  }
+
+  async function getStatus() {
+    try {
+      const res = await fetch(`${BACKEND_URL}/status`);
+      const data = await res.json();
+      
+      boxes.forEach(box => {
+        if(data[box.id] !== undefined) {
+          box.status = data[box.id];
+        }
+      });
+      
+      drawAll();
+      updateSlotSummary();
+      
+      const cam = cameras.find(c => c.id === currentCameraId);
+      if (cam) {
+        const total = boxes.length;
+        const empty = boxes.filter(b => b.status === "empty").length;
+        const occupied = boxes.filter(b => b.status === "occupied").length;
+        
+        cam.total = total;
+        cam.empty = empty;
+        cam.occupied = occupied;
+        
+        saveState();
+        updateStats();
+        renderAll();
+      }
+    } catch(error) {
+      console.error("Error updating status:", error);
+    }
+  }
+
+  function setupCanvas() {
+    const container = overlayCanvas.parentElement;
+    overlayCanvas.width = container.offsetWidth;
+    overlayCanvas.height = container.offsetHeight;
+  }
+
+  function toggleEditMode() {
+    editMode = !editMode;
+    editStatus.textContent = editMode ? "ON" : "OFF";
+    overlayCanvas.style.cursor = editMode ? "crosshair" : "default";
+  }
+
+  function clearAllBoxes() {
+    if(confirm("Clear all parking slots?")) {
+      boxes = [];
+      redoStack = [];
+      boxCount = 0;
+      drawAll();
+      updateSlotSummary();
+      updateSlots();
+    }
+  }
+
+  overlayCanvas.addEventListener('mousedown', e => {
+    if(!editMode) return;
+    isDrawing = true;
+    const rect = overlayCanvas.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+    currentBox = null;
+  });
+
+  overlayCanvas.addEventListener('mousemove', e => {
+    if(!isDrawing || !editMode) return;
+    const rect = overlayCanvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    const endY = e.clientY - rect.top;
+    const width = endX - startX;
+    const height = endY - startY;
+    
+    if(Math.abs(width) > 10 && Math.abs(height) > 10) {
+      currentBox = { 
+        x: Math.min(startX, endX), 
+        y: Math.min(startY, endY), 
+        w: Math.abs(width), 
+        h: Math.abs(height), 
+        status: "empty", 
+        id: "slot_" + (boxCount + 1) 
+      };
+    }
+    drawAll();
+  });
+
+  overlayCanvas.addEventListener('mouseup', e => {
+    if(!isDrawing || !editMode) return;
+    isDrawing = false;
+    if(currentBox && currentBox.w > 10 && currentBox.h > 10) { 
+      boxes.push(currentBox); 
+      redoStack = [];
+      boxCount++;
+      updateSlots();
+    }
+    currentBox = null;
+    drawAll();
+    updateSlotSummary();
+  });
+
+  function undoBox() { 
+    if(boxes.length > 0) { 
+      redoStack.push(boxes.pop()); 
+      drawAll(); 
+      updateSlots();
+      updateSlotSummary();
+    } 
+  }
+  
+  function redoBox() { 
+    if(redoStack.length > 0) { 
+      boxes.push(redoStack.pop()); 
+      drawAll(); 
+      updateSlots();
+      updateSlotSummary();
+    } 
+  }
+
+  function drawAll() {
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    
+    boxes.forEach(box => {
+      ctx.strokeStyle = box.status === "occupied" ? "green" : "red";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(box.x, box.y, box.w, box.h);
+      
+      ctx.fillStyle = box.status === "occupied" ? "green" : "red";
+      ctx.font = "12px Arial";
+      ctx.fillText(box.id, box.x + 5, box.y + 15);
+    });
+    
+    if(currentBox) {
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = "blue";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(currentBox.x, currentBox.y, currentBox.w, currentBox.h);
+      ctx.setLineDash([]);
+    }
+  }
+
+  function updateSlotSummary() {
+    let total = boxes.length;
+    let empty = boxes.filter(b => b.status === "empty").length;
+    let occupied = boxes.filter(b => b.status === "occupied").length;
+    
+    slotSummary.textContent = `Total Slot: ${total} | Kosong: ${empty} | Terisi: ${occupied}`;
+  }
+
+  btnResetBg.addEventListener('click', resetBackground);
+  btnEditMode.addEventListener('click', toggleEditMode);
+  btnUndo.addEventListener('click', undoBox);
+  btnRedo.addEventListener('click', redoBox);
+  btnClearAll.addEventListener('click', clearAllBoxes);
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cameras));
+    localStorage.setItem(STORAGE_PIN, pinnedId || "");
+  }
+
+  function updateStats() {
+    const total = cameras.reduce((sum, cam) => sum + (cam.total || 0), 0);
+    const empty = cameras.reduce((sum, cam) => sum + (cam.empty || 0), 0);
+    const occupied = cameras.reduce((sum, cam) => sum + (cam.occupied || 0), 0);
+    const rate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    
+    document.getElementById("stat-total").textContent = total;
+    document.getElementById("stat-empty").textContent = empty;
+    document.getElementById("stat-occupied").textContent = occupied;
+    document.getElementById("stat-rate").textContent = rate + "%";
+    
+    const activeCount = cameras.length;
+    const statSub = document.querySelectorAll(".stat-sub")[3];
+    if (statSub) statSub.textContent = activeCount + " kamera aktif";
+  }
+
+  function startStatusPolling(camId) {
+    if (statusIntervals[camId]) {
+      clearInterval(statusIntervals[camId]);
+    }
+    
+    statusIntervals[camId] = setInterval(() => {
+      const cam = cameras.find(c => c.id === camId);
+      if (cam) {
+        getStatus().catch(console.error);
+      }
+    }, 1000);
+  }
+
+  function stopStatusPolling(camId) {
+    if (statusIntervals[camId]) {
+      clearInterval(statusIntervals[camId]);
+      delete statusIntervals[camId];
+    }
+  }
+
+  function renderAll() {
+    grid.innerHTML = "";
+    pinnedSection.innerHTML = "";
+
+    cameras.forEach((cam, index) => {
+      const card = document.createElement("div");
+      card.className = "camera";
+      card.draggable = true;
+      card.dataset.id = cam.id;
+      card.dataset.index = index;
+
+      card.addEventListener("dragstart", (e) => {
+        draggedElement = card;
+        card.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+      });
+      
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+        draggedElement = null;
+      });
+      
+      card.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (draggedElement && draggedElement !== card) {
+          const rect = card.getBoundingClientRect();
+          const midpoint = rect.left + rect.width / 2;
+          if (e.clientX < midpoint) {
+            card.parentNode.insertBefore(draggedElement, card);
+          } else {
+            card.parentNode.insertBefore(draggedElement, card.nextSibling);
+          }
+        }
+      });
+      
+      card.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (draggedElement) {
+          const newOrder = Array.from(grid.children).map(el => el.dataset.id);
+          cameras = newOrder.map(id => cameras.find(c => c.id === id));
+          saveState();
+          renderAll();
+        }
+      });
+
+      const preview = document.createElement("div");
+      preview.className = "preview";
+      
+      const img = document.createElement("img");
+      img.src = `${BACKEND_URL}/video?t=${Date.now()}`;
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.onerror = () => {
+        preview.innerHTML = `
+          <div style="text-align:center;color:var(--muted)">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="6" width="18" height="15" rx="2"></rect>
+              <circle cx="12" cy="13" r="3.2"></circle>
+            </svg>
+            <div class="small">Kamera tidak tersedia</div>
+          </div>`;
+      };
+      preview.appendChild(img);
+
+      const overlay = document.createElement("div");
+      overlay.className = "pin-overlay";
+      overlay.innerHTML = `
+        <button class="pin-button" title="${pinnedId === cam.id ? "Unpin Kamera" : "Pin Kamera"}">
+          ${getIconSVG("pin", pinnedId === cam.id)}
+        </button>`;
+      overlay.onclick = () => togglePin(cam.id);
+      preview.appendChild(overlay);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.innerHTML = `
+        <div class="name">${cam.name}</div>
+        <div class="actions"></div>
+      `;
+
+      const actions = meta.querySelector(".actions");
+      const btnEdit = makeButton("edit", "Edit kamera", () => openEdit(cam.id));
+      const btnDetect = makeButton("detect", "Atur area deteksi", () => openDetect(cam.id));
+      const btnDel = makeButton("delete", "Hapus kamera", () => openConfirm(cam.id));
+      actions.append(btnEdit, btnDetect, btnDel);
+
+      const footer = document.createElement("div");
+      footer.className = "stats";
+      footer.innerHTML = `
+        <div class="stat-item">Total: <strong>${cam.total || 0}</strong></div>
+        <div class="stat-item">Kosong: <strong>${cam.empty || 0}</strong></div>
+        <div class="stat-item">Terisi: <strong>${cam.occupied || 0}</strong></div>
+      `;
+
+      card.append(preview, meta, footer);
+      grid.appendChild(card);
+
+      if (cam.boxes && cam.boxes.length > 0) {
+        startStatusPolling(cam.id);
+      }
+
+      if (pinnedId === cam.id) {
+        const pinned = document.createElement("div");
+        pinned.className = "preview-big";
+        
+        const pinnedImg = document.createElement("img");
+        
+        if (cam.type === 'mobile' && cam.token) {
+          pinnedImg.src = `${BACKEND_URL}/mobile_video/${cam.token}`;
+        } else {
+          pinnedImg.src = `${BACKEND_URL}/video?t=${Date.now()}`;
+        }
+
+        pinnedImg.style.width = "100%";
+        pinnedImg.style.height = "100%";
+        pinnedImg.style.objectFit = "contain";
+        
+        pinned.innerHTML = `<button class="unpin-btn" title="Unpin Kamera">${getIconSVG("pin", true)}</button>`;
+        pinned.appendChild(pinnedImg);
+        pinned.querySelector(".unpin-btn").onclick = () => togglePin(cam.id);
+        pinnedSection.appendChild(pinned);
+        pinnedSection.classList.remove("hidden");
+      }
+    });
+
+    if (!pinnedId) pinnedSection.classList.add("hidden");
+    updateStats();
+    saveState();
+  }
+
+  function makeButton(icon, title, onClick, active = false) {
+    const btn = document.createElement("button");
+    btn.className = "icon-btn";
+    btn.innerHTML = getIconSVG(icon, active);
+    btn.title = title;
+    btn.onclick = e => {
+      e.stopPropagation();
+      onClick();
+    };
+    return btn;
+  }
+
+  function togglePin(id) {
+    pinnedId = pinnedId === id ? null : id;
+    saveState();
+    renderAll();
+  }
+
+  btnAdd.addEventListener("click", () => {
+    inputName.value = "";
+    inputUrl.value = "";
+    cameraType.value = "webcam";
+    cameraIndex.value = "0";
+    updateCameraTypeFields();
+    modalAdd.classList.remove("hidden");
+  });
+
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.onclick = () => {
+      inputName.value = btn.dataset.preset;
+    };
+  });
+
+  btnSave.addEventListener("click", async () => {
+    const name = inputName.value.trim() || "Kamera Tanpa Nama";
+    const type = cameraType.value;
+    const index = cameraIndex.value;
+    const url = inputUrl.value.trim();
+
+    let ip = null;
+    let idx = null;
+    let token = null;
+
+    if (type === 'ip') {
+        ip = url;
+    } else if (type === 'mobile') {
+        token = window.currentMobileToken;
+        // Untuk mobile, gunakan endpoint khusus
+        ip = `${BACKEND_URL}/mobile_video/${token}`;
+    } else {
+        idx = index;
+    }
+
+    const success = await setCamera(ip, idx);
+    
+    if (success || type === 'mobile') {  // Mobile tidak perlu set_camera
+        const camId = "cam-" + Date.now();
+        cameras.push({ 
+            id: camId,
+            name, 
+            type,
+            index: idx,
+            url: ip,
+            token: token,  // Simpan token jika mobile
+            total: 0, 
+            empty: 0, 
+            occupied: 0 
+        });
+
+        modalAdd.classList.add("hidden");
+        renderAll();
+        alert(`Kamera "${name}" berhasil ditambahkan!`);
+    } else {
+        alert("Gagal menghubungkan kamera. Periksa koneksi dan coba lagi.");
+    }
+  });
+
+  function openEdit(id) {
+    const cam = cameras.find(c => c.id === id);
+    if (!cam) return;
+    editingCameraId = id;
+    inputEditName.value = cam.name;
+    modalEdit.classList.remove("hidden");
+  }
+
+  btnSaveEdit.addEventListener("click", async () => {
+    if (!editingCameraId) return;
+    const cam = cameras.find(c => c.id === editingCameraId);
+    if (cam) {
+      const name = inputEditName.value.trim() || "Kamera Tanpa Nama";
+      cam.name = name;
+      
+      editingCameraId = null;
+      modalEdit.classList.add("hidden");
+      saveState();
+      renderAll();
+      alert(`Kamera "${name}" berhasil diperbarui!`);
+    }
+  });
+
+  function openDetect(id) {
+    const cam = cameras.find(c => c.id === id);
+    if (!cam) return;
+
+    Object.keys(statusIntervals).forEach(camId => {
+      stopStatusPolling(camId);
+    });
+    
+    currentCameraId = id;
+    document.getElementById("detect-camera-name").textContent = cam.name;
+    
+    boxes = cam.boxes || [];
+    boxCount = boxes.length;
+    redoStack = [];
+    editMode = false;
+    editStatus.textContent = "OFF";
+
+    if (cam.type === 'mobile' && cam.token) {
+      videoPreview.src = `${BACKEND_URL}/mobile_video/${cam.token}`;
+      
+      videoPreview.onload = () => {
+        setupCanvas();
+        drawAll();
+        updateSlotSummary();
+      };
+      
+      modalDetect.classList.remove("hidden");
+      
+      setTimeout(() => {
+        setupCanvas();
+        drawAll();
+        updateSlotSummary();
+      }, 100);
+      
+      if (detectionInterval) clearInterval(detectionInterval);
+      detectionInterval = setInterval(getStatus, 1000);
+      
+      return; // PENTING: return agar tidak lanjut ke setCamera
+    }
+    
+    const ip = cam.type === 'ip' ? cam.url : null;
+    const idx = cam.type === 'webcam' ? cam.index : null;
+    
+    setCamera(ip, idx).then(success => {
+      if (success) {
+        videoPreview.src = `${BACKEND_URL}/video?t=${Date.now()}`;
+        
+        videoPreview.onload = () => {
+          setupCanvas();
+          drawAll();
+          updateSlotSummary();
+        };
+        
+        modalDetect.classList.remove("hidden");
+        
+        setTimeout(() => {
+          setupCanvas();
+          drawAll();
+          updateSlotSummary();
+        }, 100);
+        
+        if (detectionInterval) clearInterval(detectionInterval);
+        detectionInterval = setInterval(getStatus, 1000);
+      } else {
+        alert("Gagal menghubungkan kamera untuk deteksi");
+      }
+    });
+  }
+
+  document.getElementById("save-detect").onclick = () => {
+    const cam = cameras.find(c => c.id === currentCameraId);
+    if (cam) {
+      cam.boxes = boxes;
+      cam.total = boxes.length;
+      cam.empty = boxes.filter(b => b.status === "empty").length;
+      cam.occupied = boxes.filter(b => b.status === "occupied").length;
+      
+      saveState();
+      updateStats();
+      renderAll();
+      
+      // TAMBAHKAN INI: Start polling setelah save
+      startStatusPolling(currentCameraId);
+    }
+    
+    if (detectionInterval) {
+      clearInterval(detectionInterval);
+      detectionInterval = null;
+    }
+    
+    modalDetect.classList.add("hidden");
+    currentCameraId = null;
+  };
+
+  function openConfirm(id) {
+    const cam = cameras.find(c => c.id === id);
+    if (!cam) return;
+    deleteTarget = id;
+    document.getElementById("delete-camera-name").textContent = cam.name;
+    modalConfirm.classList.remove("hidden");
+  }
+
+  document.getElementById("confirm-delete").onclick = () => {
+    if (!deleteTarget) return;
+    stopStatusPolling(deleteTarget);
+    cameras = cameras.filter(c => c.id !== deleteTarget);
+    if (pinnedId === deleteTarget) pinnedId = null;
+    deleteTarget = null;
+    modalConfirm.classList.add("hidden");
+    renderAll();
+  };
+
+  document.querySelectorAll("[data-close]").forEach(btn => {
+    btn.onclick = e => {
+      const modal = e.target.closest(".modal-backdrop");
+      if (modal) {
+        modal.classList.add("hidden");
+        if (modal.id === "modal-detect" && detectionInterval) {
+          clearInterval(detectionInterval);
+          detectionInterval = null;
+        }
+      }
+    };
+  });
+
+  if (themeToggle) {
+    const savedTheme = localStorage.getItem(STORAGE_THEME) || "light";
+    document.body.classList.toggle("dark", savedTheme === "dark");
+    themeToggle.checked = savedTheme === "dark";
+
+    themeToggle.addEventListener("change", () => {
+      const isDark = themeToggle.checked;
+      document.body.classList.toggle("dark", isDark);
+      localStorage.setItem(STORAGE_THEME, isDark ? "dark" : "light");
+    });
+  }
+
+  // Tunnel Settings
+  const modalTunnel = document.getElementById("modal-tunnel");
+  const btnTunnelSettings = document.getElementById("btn-tunnel-settings");
+  const inputPublicUrl = document.getElementById("input-public-url");
+
+  btnTunnelSettings.addEventListener("click", () => {
+    inputPublicUrl.value = publicUrl || "";
+    modalTunnel.classList.remove("hidden");
+  });
+
+  document.getElementById("save-tunnel").addEventListener("click", async () => {
+    const url = inputPublicUrl.value.trim();
+  
+    try {
+      const response = await fetch(`${BACKEND_URL}/set_public_url`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url: url})
+      });
+    
+      const data = await response.json();
+    
+      if (data.status === 'ok') {
+        publicUrl = url || null;
+        localStorage.setItem(STORAGE_TUNNEL, publicUrl || '');
+        alert(url ? `Public URL set: ${url}` : 'Using local IP');
+        modalTunnel.classList.add("hidden");
+      }
+    } catch(err) {
+      alert('Error setting public URL: ' + err.message);
+    }
+  });
+
+  document.getElementById("clear-tunnel").addEventListener("click", async () => {
+    try {
+      await fetch(`${BACKEND_URL}/set_public_url`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url: ''})
+      });
+    
+      publicUrl = null;
+      localStorage.removeItem(STORAGE_TUNNEL);
+      inputPublicUrl.value = '';
+      alert('Public URL cleared. Using local IP now.');
+      modalTunnel.classList.add("hidden");
+    } catch(err) {
+      alert('Error clearing URL: ' + err.message);
+    }
+  });
+
+  renderAll();
+});
+  </script>
+</body>
+</html>

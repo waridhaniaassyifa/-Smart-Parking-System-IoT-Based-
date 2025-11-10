@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mobile Camera</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            border-radius: 10px;
+        }
+        button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #start { background: #4CAF50; color: white; }
+        #stop { background: #f44336; color: white; }
+        #status {
+            margin: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Mobile Camera Stream</h2>
+    <div id="status">Status: Not Started</div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <br>
+    <button id="start">Start Camera</button>
+    <button id="stop">Stop Camera</button>
+
+    <script>
+        const token = "{{ token }}";
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        
+        const socket = io();
+        let stream = null;
+        let intervalId = null;
+
+        document.getElementById('start').onclick = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                
+                // Set canvas size
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                });
+                
+                // Start sending frames
+                intervalId = setInterval(() => {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const frameData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    socket.emit('mobile_frame', {
+                        token: token,
+                        frame: frameData
+                    });
+                }, 100); // Send 10 FPS
+                
+                status.textContent = 'Status: Streaming...';
+            } catch (err) {
+                status.textContent = 'Error: ' + err.message;
+            }
+        };
+
+        document.getElementById('stop').onclick = () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            status.textContent = 'Status: Stopped';
+        };
+
+        socket.on('frame_received', (data) => {
+            // Optional: visual feedback
+        });
+    </script>
+</body>
+</html>
